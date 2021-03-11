@@ -87,9 +87,40 @@ i32 fsRead(i32 fd, i32 numb, void* buf) {
   // ++++++++++++++++++++++++
   // Insert your code here
   // ++++++++++++++++++++++++
+  i32 inum = bfsFdToInum(fd);
+  i32 cursor= bfsTell(fd);
+  i32 totalNumb= numb;
+  i8 diskbuf[BYTESPERBLOCK];
+  i32 bufcursor =0;
+  i32 byteLeft= bfsGetSize(inum)-cursor ;
+  if(byteLeft<totalNumb){
+    totalNumb=byteLeft;
+  }
+  while(totalNumb>0){
 
-  FATAL(ENYI);                                  // Not Yet Implemented!
-  return 0;
+    i32 fnum= cursor/ BYTESPERBLOCK;
+    i32 bcursor=cursor-(BYTESPERBLOCK*fnum);
+
+    if(totalNumb > BYTESPERBLOCK){
+
+      numb= BYTESPERBLOCK;
+      totalNumb-=BYTESPERBLOCK;
+
+    }else{
+
+    numb=totalNumb;
+    totalNumb=0;
+
+  }
+
+    bfsRead(inum,fnum,diskbuf);
+    memcpy(buf+bufcursor,diskbuf+bcursor,numb);
+    cursor+=numb;
+    bufcursor+=numb;
+    
+  }
+  bfsSetCursor(inum,cursor);
+  return bufcursor;
 }
 
 
@@ -162,6 +193,40 @@ i32 fsWrite(i32 fd, i32 numb, void* buf) {
   // Insert your code here
   // ++++++++++++++++++++++++
 
-  FATAL(ENYI);                                  // Not Yet Implemented!
+  i32 inum = bfsFdToInum(fd);
+  i32 cursor= bfsTell(fd);
+  i32 totalNumb= numb;
+  i8 diskbuf[BYTESPERBLOCK];
+  i32 bufcursor =0;
+
+  while(totalNumb>0){
+    
+    i32 fnum= cursor/ BYTESPERBLOCK;
+    i32 bcursor=cursor-(BYTESPERBLOCK*fnum);
+    bfsExtend(inum,fnum);
+    i32 dbn = bfsFbnToDbn(inum, fnum);
+    i32 remain = BYTESPERBLOCK- bcursor;
+    if(totalNumb > remain){
+
+      numb= remain;
+      totalNumb-=remain;
+
+    }else{
+
+    numb=totalNumb;
+    totalNumb=0;
+
+  }
+
+    bfsRead(inum,fnum,diskbuf);
+    memcpy(diskbuf+bcursor,buf+bufcursor,numb);
+    cursor+=numb;
+    bufcursor+=numb;
+
+    bioWrite(dbn,diskbuf);
+
+  }
+  
+  bfsSetCursor(inum,cursor);
   return 0;
 }
