@@ -1,4 +1,4 @@
-# 430-P5
+# Bothell filesystem
 P5: Filesystms
 BFS - a Unix-Like FileSystem
 This document describes how to implement a Unix-like filesystem. We call this filesystem “BFS”, for
